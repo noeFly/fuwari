@@ -6,8 +6,9 @@ import { h } from "hastscript";
  *
  * @param {Object} properties - The properties of the component.
  * @param {string} properties.repo - The Gitlab repository in the format "owner/repo".
+ * @param {string} properties.service - (optional) Third-Party GitLab service provider.
  * @param {import('mdast').RootContent[]} children - The children elements of the component.
- * @returns {import('mdast').Parent} The created GitHub Card component.
+ * @returns {import('mdast').Parent} The created GitLab Card component.
  */
 export function GitlabCardComponent(properties, children) {
 	if (Array.isArray(children) && children.length !== 0)
@@ -24,6 +25,7 @@ export function GitlabCardComponent(properties, children) {
 
 	const repo = properties.repo;
 	const repoE = repo.replace("/", "%2F"); // encoding by replace / to %2F
+	const service = properties?.service || "https://gitlab.com";
 	const cardUuid = `GC${Math.random().toString(36).slice(-6)}`; // Collisions are not important
 
 	const nAvatar = h(`div#${cardUuid}-avatar`, { class: "gc-avatar" });
@@ -43,7 +45,7 @@ export function GitlabCardComponent(properties, children) {
 	const nDescription = h(
 		`div#${cardUuid}-description`,
 		{ class: "gc-description" },
-		"Waiting for gitlab.com api...",
+		"Waiting for Gitlab Api...",
 	);
 
 	const nStars = h(`div#${cardUuid}-stars`, { class: "gc-stars" }, "00K");
@@ -53,7 +55,7 @@ export function GitlabCardComponent(properties, children) {
 		`script#${cardUuid}-script`,
 		{ type: "text/javascript", defer: true },
 		`
-      fetch('https://gitlab.com/api/v4/projects/${repoE}').then(response => response.json()).then(data => {
+      fetch('${service}/api/v4/projects/${repoE}').then(response => response.json()).then(data => {
 		document.getElementById('${cardUuid}-repo').innerText = data.name;
         document.getElementById('${cardUuid}-description').innerText = data.description?.replace(/:[a-zA-Z0-9_]+:/g, '') || "Description not set";
         document.getElementById('${cardUuid}-forks').innerText = Intl.NumberFormat('en-us', { notation: "compact", maximumFractionDigits: 1 }).format(data.forks_count).replaceAll("\u202f", '');
@@ -61,7 +63,7 @@ export function GitlabCardComponent(properties, children) {
         
 		const avatar_url = data.namespace.avatar_url;
 		if (avatar_url.startsWith('/')) {
-			document.getElementById('${cardUuid}-avatar').style.backgroundImage = 'url(https://gitlab.com' + avatar_url + ')';
+			document.getElementById('${cardUuid}-avatar').style.backgroundImage = 'url(${service}' + avatar_url + ')';
 		} else {
 			document.getElementById('${cardUuid}-avatar').style.backgroundImage = 'url(' + avatar_url + ')';
 		}
@@ -81,7 +83,7 @@ export function GitlabCardComponent(properties, children) {
 		`a#${cardUuid}-card`,
 		{
 			class: "card-github fetch-waiting no-styling",
-			href: `https://gitlab.com/${repo}`,
+			href: `${service}/${repo}`,
 			target: "_blank",
 			repo,
 		},
